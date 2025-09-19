@@ -22,18 +22,18 @@ namespace duckdb {
 // ---------------------------------------------------
 // EXTENSION SCAFFOLDING
 
-static void LoadInternal(DatabaseInstance &instance) {
-    RegisterParseTablesFunction(instance);
-	RegisterParseTableScalarFunction(instance);
-	RegisterParseWhereFunction(instance);
-	RegisterParseWhereScalarFunction(instance);
-	RegisterParseWhereDetailedFunction(instance);
-	RegisterParseFunctionsFunction(instance);
-	RegisterParseFunctionScalarFunction(instance);
+static void LoadInternal(ExtensionLoader &loader) {
+    RegisterParseTablesFunction(loader);
+	RegisterParseTableScalarFunction(loader);
+	RegisterParseWhereFunction(loader);
+	RegisterParseWhereScalarFunction(loader);
+	RegisterParseWhereDetailedFunction(loader);
+	RegisterParseFunctionsFunction(loader);
+	RegisterParseFunctionScalarFunction(loader);
 }
 
-void ParserToolsExtension::Load(DuckDB &db) {
-	LoadInternal(*db.instance);
+void ParserToolsExtension::Load(ExtensionLoader &loader) {
+	LoadInternal(loader);
 }
 
 std::string ParserToolsExtension::Name() {
@@ -52,16 +52,8 @@ std::string ParserToolsExtension::Version() const {
 
 extern "C" {
 
-DUCKDB_EXTENSION_API void parser_tools_init(duckdb::DatabaseInstance &db) {
-    duckdb::DuckDB db_wrapper(db);
-    db_wrapper.LoadExtension<duckdb::ParserToolsExtension>();
+DUCKDB_CPP_EXTENSION_ENTRY(parser_tools, loader) {
+    duckdb::LoadInternal(loader);
 }
 
-DUCKDB_EXTENSION_API const char *parser_tools_version() {
-	return duckdb::DuckDB::LibraryVersion();
 }
-}
-
-#ifndef DUCKDB_EXTENSION_MAIN
-#error DUCKDB_EXTENSION_MAIN not defined
-#endif
