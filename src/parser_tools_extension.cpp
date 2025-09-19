@@ -56,11 +56,4 @@ DUCKDB_CPP_EXTENSION_ENTRY(parser_tools, loader) {
     duckdb::LoadInternal(loader);
 }
 
-DUCKDB_EXTENSION_API const char *parser_tools_version() {
-	return duckdb::DuckDB::LibraryVersion();
 }
-}
-
-#ifndef DUCKDB_EXTENSION_MAIN
-#error DUCKDB_EXTENSION_MAIN not defined
-#endif
