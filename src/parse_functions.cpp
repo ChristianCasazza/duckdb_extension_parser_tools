@@ -2,6 +2,7 @@
 #include "duckdb.hpp"
 #include "duckdb/parser/parser.hpp"
 #include "duckdb/parser/statement/select_statement.hpp"
+#include "duckdb/parser/query_node/cte_node.hpp"
 #include "duckdb/parser/query_node/select_node.hpp"
 #include "duckdb/parser/expression/function_expression.hpp"
 #include "duckdb/parser/expression/window_expression.hpp"
@@ -201,7 +202,14 @@ static void ExtractFunctionsFromQueryNode(const QueryNode &node, std::vector<Fun
 				}
 			}
 		}
-	}
+	// additional step necessary for duckdb v1.4.0: unwrap CTE node
+	}  else if (node.type == QueryNodeType::CTE_NODE) {
+        auto &cte_node = (CTENode &)node;
+
+        if (cte_node.child) {
+            ExtractFunctionsFromQueryNode(*cte_node.child, results);
+        }
+    }
 }
 
 static void ExtractFunctionsFromSQL(const std::string &sql, std::vector<FunctionResult> &results) {
