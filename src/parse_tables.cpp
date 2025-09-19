@@ -6,11 +6,11 @@
 #include <cctype>
 #include "duckdb/parser/statement/select_statement.hpp"
 #include "duckdb/parser/query_node/select_node.hpp"
+#include "duckdb/parser/query_node/cte_node.hpp"
 #include "duckdb/parser/tableref/basetableref.hpp"
 #include "duckdb/parser/tableref/joinref.hpp"
 #include "duckdb/parser/tableref/subqueryref.hpp"
 #include "duckdb/function/scalar/nested_functions.hpp"
-
 
 namespace duckdb {
 
@@ -130,7 +130,7 @@ static void ExtractTablesFromQueryNode(
     if (node.type == QueryNodeType::SELECT_NODE) {
         auto &select_node = (SelectNode &)node;
 
-        // Emit CTE definitions
+        // Handle CTE definitions
         for (const auto &entry : select_node.cte_map.map) {
             results.push_back(TableRefResult{
                 "", entry.first, TableContext::CTE
@@ -143,6 +143,23 @@ static void ExtractTablesFromQueryNode(
 
         if (select_node.from_table) {
             ExtractTablesFromRef(*select_node.from_table, results, context, true, &select_node.cte_map);
+        }
+    } 
+    // for ctes, we need an extra step to extract the cte body, and then the rest of the statement
+    // don't actually record any details from this node in the result otherwise it will be duplicated in the recursive calls below.
+    else if (node.type == QueryNodeType::CTE_NODE) {
+        auto &cte_node = (CTENode &)node;
+
+        // Extract tables from the CTE query definition
+        if (cte_node.query) {
+            ExtractTablesFromQueryNode(*cte_node.query, results, TableContext::From, cte_map);
+        }
+
+        // Extract tables from the child query (the main query that uses the CTE)
+        if (cte_node.child) {
+            // Pass the existing CTE map to the child query
+            // The current CTE will be available for reference in the child
+            ExtractTablesFromQueryNode(*cte_node.child, results, context, cte_map);
         }
     }
 }
