@@ -150,11 +150,6 @@ static void ExtractTablesFromQueryNode(
     else if (node.type == QueryNodeType::CTE_NODE) {
         auto &cte_node = (CTENode &)node;
 
-        // Extract tables from the CTE query definition
-        if (cte_node.query) {
-            ExtractTablesFromQueryNode(*cte_node.query, results, TableContext::From, cte_map);
-        }
-
         // Extract tables from the child query (the main query that uses the CTE)
         if (cte_node.child) {
             // Pass the existing CTE map to the child query
