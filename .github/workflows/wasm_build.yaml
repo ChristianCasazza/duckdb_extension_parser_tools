@@ -1,0 +1,35 @@
+name: Build Wasm Extension
+on: [push, workflow_dispatch]
+
+jobs:
+  build-wasm:
+    name: Build Wasm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Setup DuckDB Extension Environment
+        # This action handles setting up the specific toolchain needed
+        uses: duckdb/duckdb-extension-actions/build_extension@v1
+        with:
+          # CRITICAL: This must match the DuckDB version inside your @duckdb/duckdb-wasm package.
+          # If your package.json has @duckdb/duckdb-wasm: 1.29.0, check which DuckDB Core version that maps to.
+          # Usually 1.29.0 (wasm) -> v1.1.x (core). 
+          # Check the release notes of duckdb-wasm 1.29.0 to be sure.
+          duckdb_version: v1.1.1 
+          extension_name: parser_tools
+          target: wasm_mvp # Build for standard Wasm (MVP)
+          
+      # The action above produces an artifact. Let's list it to be sure.
+      - name: List Output
+        run: ls -R build/wasm_mvp/
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: parser_tools_wasm
+          path: |
+            build/wasm_mvp/extension/parser_tools/parser_tools.duckdb_extension.wasm
